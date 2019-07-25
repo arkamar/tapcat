@@ -10,7 +10,20 @@ ip tuntap add tap0 mode tap user user_name group group_name
 ip link set dev tap0 up
 ```
 
-Create vpn tunnel over ssh
+### Creating vpn tunnel over ssh
+
 ```sh
 tapcat tap0 ssh user@server tapcat tap0
+```
+
+### Creating insecure tunnel over TCP with ncat
+
+Server side:
+```sh
+ncat -c 'tapcat tap0' -klp 1234
+```
+
+Client side:
+```sh
+ncat -c 'tapcat tap0' 10.0.0.2 1234
 ```
