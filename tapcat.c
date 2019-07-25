@@ -1,3 +1,6 @@
+/* Copyright 2019, Petr Vaněk */
+/* SPDX-License-Identifier: MIT */
+
 #include <linux/if.h>
 #include <linux/if_tun.h>
 
