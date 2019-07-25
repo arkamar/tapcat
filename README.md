@@ -12,5 +12,5 @@ ip link set dev tap0 up
 
 Create vpn tunnel over ssh
 ```sh
-tapcat tap0 ssh server tapcat tap0 ssh
+tapcat tap0 ssh user@server tapcat tap0
 ```
