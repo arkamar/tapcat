@@ -106,6 +106,11 @@ main(int argc, char * argv[]) {
 			break;
 		}
 
+		if (pfds[0].revents & POLLERR || pfds[1].revents & POLLERR) {
+			fprintf(stderr, "pollerror\n");
+			break;
+		}
+
 		if (pfds[0].revents & POLLIN) {
 			ret = read(pfds[0].fd, buf, sizeof buf);
 			all_write(tap_fd, buf, ret);
