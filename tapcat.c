@@ -113,11 +113,15 @@ main(int argc, char * argv[]) {
 
 		if (pfds[0].revents & POLLIN) {
 			ret = read(pfds[0].fd, buf, sizeof buf);
+			if (ret == 0)
+				break;
 			all_write(tap_fd, buf, ret);
 		}
 
 		if (pfds[1].revents & POLLIN) {
 			ret = read(pfds[1].fd, buf, sizeof buf);
+			if (ret == 0)
+				break;
 			all_write(1, buf, ret);
 		}
 
