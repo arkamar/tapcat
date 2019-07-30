@@ -20,10 +20,10 @@ tapcat tap0 ssh user@server tapcat tap0
 
 Server side:
 ```sh
-ncat -c 'tapcat tap0' -klp 1234
+tapcat tap0 ncat -klp 1234
 ```
 
 Client side:
 ```sh
-ncat -c 'tapcat tap0' 10.0.0.2 1234
+tapcat tap0 ncat 10.0.0.2 1234
 ```
