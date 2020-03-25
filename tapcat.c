@@ -93,11 +93,14 @@ main(int argc, char * argv[]) {
 
 	memset(pfds, 0, sizeof pfds);
 
-	pfds[0].fd = 0;
-	pfds[0].events = POLLIN | POLLHUP;
+	#define STD_IN 0
+	#define TAP_FD 1
 
-	pfds[1].fd = tap_fd;
-	pfds[1].events = POLLIN | POLLHUP;
+	pfds[STD_IN].fd = 0;
+	pfds[STD_IN].events = POLLIN | POLLHUP;
+
+	pfds[TAP_FD].fd = tap_fd;
+	pfds[TAP_FD].events = POLLIN | POLLHUP;
 
 	for (;;) {
 		ret = poll(pfds, LEN(pfds), -1);
@@ -106,26 +109,26 @@ main(int argc, char * argv[]) {
 			break;
 		}
 
-		if (pfds[0].revents & POLLERR || pfds[1].revents & POLLERR) {
+		if (pfds[STD_IN].revents & POLLERR || pfds[TAP_FD].revents & POLLERR) {
 			fprintf(stderr, "pollerror\n");
 			break;
 		}
 
-		if (pfds[0].revents & POLLIN) {
-			ret = read(pfds[0].fd, buf, sizeof buf);
+		if (pfds[STD_IN].revents & POLLIN) {
+			ret = read(pfds[STD_IN].fd, buf, sizeof buf);
 			if (ret == 0)
 				break;
 			all_write(tap_fd, buf, ret);
 		}
 
-		if (pfds[1].revents & POLLIN) {
-			ret = read(pfds[1].fd, buf, sizeof buf);
+		if (pfds[TAP_FD].revents & POLLIN) {
+			ret = read(pfds[TAP_FD].fd, buf, sizeof buf);
 			if (ret == 0)
 				break;
 			all_write(1, buf, ret);
 		}
 
-		if (pfds[0].revents & POLLHUP || pfds[1].revents & POLLHUP) {
+		if (pfds[STD_IN].revents & POLLHUP || pfds[TAP_FD].revents & POLLHUP) {
 			break;
 		}
 	}
