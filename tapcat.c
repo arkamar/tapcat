@@ -4,10 +4,12 @@
 #include <linux/if.h>
 #include <linux/if_tun.h>
 
+#include <endian.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -15,6 +17,13 @@
 #define TUN_DEV "/dev/net/tun"
 
 #define LEN(x) (sizeof x / sizeof * x)
+
+typedef uint16_t pack_len_t;
+
+struct pack {
+	pack_len_t len;
+	unsigned char data[];
+};
 
 int
 all_write(int fd, const unsigned char * buf, int len) {
@@ -63,6 +72,7 @@ int
 main(int argc, char * argv[]) {
 	const char * argv0, * name;
 	unsigned char buf[0x1000];
+	struct pack * pack = (struct pack *)buf;
 	struct pollfd pfds[2];
 	int tap_fd, ret;
 
@@ -141,17 +151,28 @@ main(int argc, char * argv[]) {
 		}
 
 		if (pfds[STD_IN].revents & POLLIN) {
-			ret = read(pfds[STD_IN].fd, buf, sizeof buf);
-			if (ret == 0)
+			ret = read(pfds[STD_IN].fd, buf, sizeof pack->len);
+			if (ret != sizeof pack->len) {
+				fprintf(stderr, "not enougth data for pack length: %d\n", ret);
 				break;
-			all_write(tap_fd, buf, ret);
+			}
+
+			pack_len_t len = be16toh(pack->len);
+
+			ret = read(pfds[STD_IN].fd, pack->data, len);
+			if (ret != len) {
+				fprintf(stderr, "not enougth data. Got %d required %d\n", ret, len);
+				break;
+			}
+			all_write(tap_fd, pack->data, len);
 		}
 
 		if (pfds[TAP_FD].revents & POLLIN) {
-			ret = read(pfds[TAP_FD].fd, buf, sizeof buf);
+			ret = read(pfds[TAP_FD].fd, pack->data, sizeof buf - sizeof pack->len);
+			pack->len = htobe16(ret);
 			if (ret == 0)
 				break;
-			all_write(1, buf, ret);
+			all_write(1, buf, ret + sizeof pack->len);
 		}
 
 		if (pfds[STD_IN].revents & POLLHUP || pfds[TAP_FD].revents & POLLHUP) {
