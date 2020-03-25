@@ -42,6 +42,23 @@ all_write(int fd, const unsigned char * buf, int len) {
 }
 
 int
+read_all(int fd, unsigned char * buf, int len) {
+	register int ret;
+
+	while (len) {
+		ret = read(fd, buf, len);
+		if (ret == -1) {
+			if (errno == EINTR) continue;
+			return ret;
+		}
+		buf += ret;
+		len -= ret;
+	}
+
+	return 0;
+}
+
+int
 open_tap_device(const char * dev) {
 	struct ifreq ifr;
 	int fd, err;
@@ -159,9 +176,9 @@ main(int argc, char * argv[]) {
 
 			pack_len_t len = be16toh(pack->len);
 
-			ret = read(pfds[STD_IN].fd, pack->data, len);
-			if (ret != len) {
-				fprintf(stderr, "not enougth data. Got %d required %d\n", ret, len);
+			ret = read_all(pfds[STD_IN].fd, pack->data, len);
+			if (ret == -1) {
+				fprintf(stderr, "cannot read all data\n");
 				break;
 			}
 			all_write(tap_fd, pack->data, len);
