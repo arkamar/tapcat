@@ -82,12 +82,38 @@ main(int argc, char * argv[]) {
 	}
 
 	if (*argv) {
-		dup2(tap_fd, 0);
-		dup2(tap_fd, 1);
-		ret = execvp(*argv, argv);
-		if (ret == -1) {
-			perror("exec");
+		int p[2][2];
+		if (pipe(p[0]) == -1 || pipe(p[1]) == -1) {
+			perror("pipes");
 			return 1;
+		}
+
+		int pid = fork();
+		if (pid == -1) {
+			perror("fork");
+			return 1;
+		}
+
+		if (pid == 0) {
+			dup2(p[0][0], 0);
+			dup2(p[1][1], 1);
+			close(p[0][0]);
+			close(p[1][1]);
+			close(p[0][1]);
+			close(p[1][0]);
+			close(tap_fd);
+			ret = execvp(*argv, argv);
+			if (ret == -1) {
+				perror("exec");
+				_exit(1);
+			}
+		} else {
+			dup2(p[0][1], 1);
+			dup2(p[1][0], 0);
+			close(p[0][0]);
+			close(p[1][1]);
+			close(p[0][1]);
+			close(p[1][0]);
 		}
 	}
 
