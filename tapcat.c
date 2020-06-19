@@ -168,9 +168,9 @@ main(int argc, char * argv[]) {
 		}
 
 		if (pfds[STD_IN].revents & POLLIN) {
-			ret = read(pfds[STD_IN].fd, buf, sizeof pack->len);
-			if (ret != sizeof pack->len) {
-				fprintf(stderr, "not enougth data for pack length: %d\n", ret);
+			ret = read_all(pfds[STD_IN].fd, buf, sizeof pack->len);
+			if (ret == -1) {
+				fprintf(stderr, "cannot read packet length\n");
 				break;
 			}
 
